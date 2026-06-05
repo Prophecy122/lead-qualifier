@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Qualifier — AI Powered</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080C14; color: #E8EDF5; font-family: 'Segoe UI', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .container { width: 100%; max-width: 480px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  h1 span { color: #3B82F6; }
+  .sub { font-size: 13px; color: #4A5568; margin-bottom: 32px; }
+  .card { background: #0D1220; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  label { font-size: 12px; color: #4A5568; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  input, textarea { width: 100%; background: #080C14; border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 10px 14px; color: #E8EDF5; font-size: 14px; font-family: inherit; outline: none; margin-bottom: 16px; }
+  input:focus, textarea:focus { border-color: #3B82F6; }
+  textarea { height: 100px; resize: none; }
+  button { width: 100%; padding: 12px; background: #3B82F6; color: white; border: none; border-radius: 7px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  button:hover { background: #2563EB; }
+  button:disabled { background: #1E3A5F; color: #4A5568; cursor: not-allowed; }
+  .result { display: none; background: #0D1220; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 24px; }
+  .score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .score-num { font-size: 48px; font-weight: 700; color: #3B82F6; }
+  .grade { font-size: 14px; font-weight: 600; padding: 4px 14px; border-radius: 99px; }
+  .grade-hot { background: rgba(239,68,68,0.15); color: #F87171; }
+  .grade-warm { background: rgba(245,158,11,0.15); color: #FCD34D; }
+  .grade-cold { background: rgba(59,130,246,0.15); color: #60A5FA; }
+  .result-label { font-size: 11px; color: #4A5568; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .result-text { font-size: 14px; color: #E8EDF5; line-height: 1.6; margin-bottom: 16px; }
+  .loading { text-align: center; color: #4A5568; font-size: 14px; padding: 20px; display: none; }
+  .dot { display: inline-block; animation: blink 1s infinite; } 
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,100%{opacity:0.2} 50%{opacity:1} }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Lead <span>Qualifier</span> AI</h1>
+  <p class="sub">Paste in a lead's details and get an instant AI qualification score.</p>
+
+  <div class="card">
+    <label>Client Name</label>
+    <input type="text" id="name" placeholder="e.g. John Smith" />
+    <label>Budget Range</label>
+    <input type="text" id="budget" placeholder="e.g. $5,000 - $10,000" />
+    <label>Project Description</label>
+    <textarea id="description" placeholder="Describe what the client needs..."></textarea>
+    <button onclick="qualify()" id="btn">Qualify This Lead →</button>
+  </div>
+
+  <div class="loading" id="loading">
+    Analyzing lead<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+  </div>
+
+  <div class="result" id="result">
+    <div class="score-row">
+      <div>
+        <div class="result-label">Lead Score</div>
+        <div class="score-num" id="score">0</div>
+      </div>
+      <div class="grade" id="grade"></div>
+    </div>
+    <div class="result-label">Assessment</div>
+    <div class="result-text" id="summary"></div>
+    <div class="result-label">Recommended Action</div>
+    <div class="result-text" id="recommendation"></div>
+    <button onclick="reset()" style="background:transparent; border: 1px solid rgba(255,255,255,0.1); color: #4A5568;">← Qualify Another Lead</button>
+  </div>
+</div>
+
+<script>
+async function qualify() {
+  const name = document.getElementById('name').value.trim();
+  const budget = document.getElementById('budget').value.trim();
+  const description = document.getElementById('description').value.trim();
+
+  if(!name || !budget || !description) {
+    alert('Please fill in all fields.');
+    return;
+  }
+
+  document.getElementById('btn').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('result').style.display = 'none';
+
+  const res = await fetch('/qualify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, budget, description })
+  });
+
+  const data = await res.json();
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('score').textContent = data.score;
+  document.getElementById('summary').textContent = data.summary;
+  document.getElementById('recommendation').textContent = data.recommendation;
+
+  const gradeEl = document.getElementById('grade');
+  gradeEl.textContent = data.grade;
+  gradeEl.className = 'grade grade-' + data.grade.toLowerCase();
+}
+
+function reset() {
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('btn').disabled = false;
+  document.getElementById('name').value = '';
+  document.getElementById('budget').value = '';
+  document.getElementById('description').value = '';
+}
+</script>
+</body>
+</html>
